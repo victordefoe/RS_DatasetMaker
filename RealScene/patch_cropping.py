@@ -1,14 +1,14 @@
 '''
 @Author: your name
 @Date: 2020-07-21 21:01:03
-LastEditTime: 2020-09-23 09:02:19
+LastEditTime: 2020-11-18 21:19:30
 LastEditors: Liu Chen
 @Description: preprocessing 该文件用于制作 现实主义数据集
         步骤：1，运行crop_dir函数，把原始图像按照中心裁剪的方式保留正方形。
             2，运行main函数，设置最终的输出目录 base_root。
                 注意：a) 所有的crop_dir里面的图像文件都需要用数字命名且不可命名重复
                       b) 注意修改目录 crop_dir和base_root 为你的目录路径
-FilePath: \GatherAlgorithms\deep_learning\seq_models\scripts\work0721.py
+FilePath: \RS_DatasetMaker\RealScene\patch_cropping.py
 @  
 '''
 
@@ -38,9 +38,7 @@ def crop_center_save(fp, size, savepath):
         size: tuple (w,h) 
         savepath: dir (abs)
     """
-    # read in image
-    # img = cv_imread(fp)
-    # img = plt.imread(fp)
+    
     img = Image.open(fp)
     fname = os.path.split(fp)[1]
     num = int(fname[4:].split('.')[0])-33
@@ -51,17 +49,15 @@ def crop_center_save(fp, size, savepath):
     rdw = center[0] + size[0] // 2
     rdh = center[1] + size[1] // 2
     crop_img = img.crop([luw, luh, rdw, rdh])
-    # plt.imshow(crop_img)
     crop_img.save(opj(savepath, str(num)+'.jpg'))
-    # plt.show()
 
 
 def crop_dir():
     """
     crop all images in a directory and save them in another directory
     """
-    fp = r'J:\research\datasets\NWPU-ChangAn\NWPU-ChangAn'
-    savepath = r'J:\research\datasets\NWPU-ChangAn\NWPU-ChangAn_Rect'
+    fp = r'RealScene/samples/A'
+    savepath = r'RealScene/samples/A+'
 
     for name in tqdm(os.listdir(fp)):
         file = opj(fp, name)
@@ -132,7 +128,7 @@ def crop_satellite(img_file, json_file, save_path, info_path):
             angle = -45-ang  # 第2个点（终止点）为原点 -45 ~ 90度范围内为逆时针旋转
         else:
             angle = 45-(-90-ang)  # 其余情况都是顺时针旋转角度
-        # print(ang,angle, ps)
+
         center = ((ps[0][0]+ps[1][0])//2, (ps[0][1]+ps[1][1])//2)
         # 获得正方形的四个角的坐标，顺序（左上，右上，右下，左下）
 
@@ -149,7 +145,6 @@ def crop_satellite(img_file, json_file, save_path, info_path):
         # 获取四点坐标以及旋转后的四点坐标
         pt = get_corners(ps[0], ps[1])
         for i in range(len(pt)):
-            # pt[i] = cal_coors_afterrotate_v2(pt[i],center,(w,h),angle)
             pt[i] = cal_coors_afterrotate(pt[i], rotateMat)
 
         # 处理反转的情况
@@ -165,9 +160,6 @@ def crop_satellite(img_file, json_file, save_path, info_path):
         produce_datagroup(imgRotation, pt, opj(
             save_path, foldername), info_path)
         print(pt)
-
-# def generate_new():
-#     skip_is_in
 
 
 def produce_datagroup(source_img, center_patch, save_path, info_path):
@@ -186,8 +178,7 @@ def produce_datagroup(source_img, center_patch, save_path, info_path):
     updown = [center_patch[0][1], center_patch[3][1]]
     leftright = [center_patch[0][0], center_patch[1][0]]
 
-    shift_scales = [i for i in range(-500, 500, 40)]
-    # shift_scales.remove(0)
+    shift_scales = [i for i in range(-400, 400, 200)]
     offsets = [0] + shift_scales
 
     fname = 0
@@ -228,24 +219,22 @@ def doublecheck(save_path):
 
 
 def main():
-    # NWPU-ChangAn 数据
-    # base_root = r'J:\work_202007_10\data'
-    # sp = opj(base_root, r'20200722_2.tif')
-    # jsonfiles =  ['20200722_2.json', '50_109.json', '110_169.json']
-
-    base_root = r'J:\work_202007_10\data_DaMing'
-    sp = opj(base_root, '20200825.tif')
+    # 该tif文件需要存在，在图新地图上可以下载
+    sp = r'RealScene/samples/B/20200722_2.tif'
+    json_root = r'RealScene/samples/C'
+    result_root = r'RealScene/samples/D'
     # 对于多个不同的人标注的json文件，分别处理，自动合并
-    jsonfiles = ['DaMing_Palace_chenwang.json', 'DaMing_Palace_lichao.json']
+    # json文件是用labelme标注后得到的
+    jsonfiles = ['20200722_2.json']
 
-    save = opj(base_root, 'crop')
-    info = opj(base_root, 'cropdb')
+    save = opj(result_root, 'crop')
+    info = opj(result_root, 'cropdb')
     if not os.path.exists(save):
         os.mkdir(save)
     if not os.path.exists(info):
         os.mkdir(info)
     for fname in jsonfiles:
-        jp = opj(base_root, fname)
+        jp = opj(json_root, fname)
         crop_satellite(sp, jp, save, info)
 
     doublecheck(save)
