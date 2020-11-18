@@ -55,7 +55,7 @@
 
 ### 把相应的标注区域裁切保存下来，保存到目录D
 
-运行patch_cropping.py文件里面的main函数即可 要注意更改
+运行patch_cropping.py文件里面的main函数即可 要注意更改相应的目录。还有安装包。
 
 
 
